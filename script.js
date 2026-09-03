@@ -1,5 +1,5 @@
 // ==========================================
-// EL PEQUEÑO SHADOW - MOTOR DE JUEGO COMPLETO
+// EL PEQUEÑO SHADOW - MOTOR DE JUEGO
 // ==========================================
 
 const translations = {
