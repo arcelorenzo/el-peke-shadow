@@ -1,1 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Pequeño Shadow - El Viaje de El Lobichua</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="game-body">
 
+    <!-- Pantalla de Configuración Inicial (Idioma, Brillo, Volumen) -->
+    <div id="options-screen" class="screen">
+        <h1 id="main-title" class="game-main-title">EL PEQUEÑO SHADOW</h1>
+        <div class="options-box">
+            <label>🌐 Idioma / Language:</label>
+            <select id="lang-select" onchange="changeLanguage(this.value)">
+                <option value="es">Español</option>
+                <option value="en">English</option>
+                <option value="it">Italiano</option>
+                <option value="fr">Français</option>
+                <option value="jp">日本語</option>
+                <option value="pt">Português</option>
+            </select>
+
+            <label id="lbl-volume">🔊 Volumen de Audio:</label>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.5">
+
+            <label id="lbl-brightness">☀️ Brillo de Pantalla:</label>
+            <input type="range" id="brightness-slider" min="0.5" max="1.5" step="0.1" value="1" oninput="changeBrightness(this.value)">
+        </div>
+        <button id="btn-start" class="paw-button" onclick="startAdventure()">🐾 Iniciar el Viaje</button>
+    </div>
+
+    <!-- Contenedor Principal del Juego -->
+    <div id="game-container" class="hidden">
+        <!-- Top Bar: Pausa y Guardado -->
+        <div class="top-control-bar">
+            <button class="mini-btn" onclick="togglePause()">⏸️ Pausa</button>
+            <button class="mini-btn" onclick="saveGame()">💾 Guardar</button>
+        </div>
+
+        <!-- Barra de Estadísticas Global -->
+        <div class="stats-bar">
+            <div class="stat-item"><span id="txt-day">Día</span>: <span id="ui-day">9</span></div>
+            <div class="stat-item"><span id="txt-level">Nivel</span>: <span id="ui-level">1</span></div>
+            <div class="stat-item">HP: <span id="ui-hp">25</span>/<span id="ui-max-hp">25</span></div>
+            <div class="stat-item" onclick="useMouthReserve()" style="cursor: pointer;" title="Haz clic para digerir carne (+5 HP)">
+                <span id="txt-mouth">Colmillos</span>: <span id="ui-mouth">🍖🍖</span> 🐾
+            </div>
+        </div>
+
+        <!-- Vista Dinámica del Juego -->
+        <div id="game-viewport">
+            <h2 class="screen-title" id="screen-title">Día 9 — El Nido del Águila</h2>
+            <div class="dialogue-box" id="dialogue-text">
+                En una gran manada de 30 lobos, el pequeño Lobichua de ojos miel era feliz... hasta que el día de las lecciones de caza, al ser lento y débil, fue traicionado, mordido y arrojado al vacío. Despiertas herido. Debes esconderte entre las rocas.
+            </div>
+            <div class="action-panel">
+                <button class="paw-button" id="btn-primary" onclick="handleGameAction()">
+                    🐾 Mantener Sigilo (Ocultarse)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
