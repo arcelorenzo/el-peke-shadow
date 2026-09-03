@@ -130,3 +130,10 @@ function startAdventure() {
     if (optionsScreen) optionsScreen.classList.add("hidden");
     if (gameContainer) gameContainer.classList.remove("hidden");
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const startBtn = document.getElementById("btn-start");
+    if (startBtn) {
+        startBtn.addEventListener("click", startAdventure);
+    }
+});
