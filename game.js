@@ -25,6 +25,13 @@ const hpVal = document.getElementById("hp-val");
 const zoneVal = document.getElementById("zone-val");
 const inventoryVal = document.getElementById("inventory-val");
 
+// Declaramos updateUI PRIMERO para que exista antes de ser llamada
+function updateUI() {
+    hpVal.innerText = gameState.hp;
+    zoneVal.innerText = gameState.zone;
+    inventoryVal.innerText = gameState.inventory;
+}
+
 // Control de botones de interfaz
 document.getElementById("btn-pause").addEventListener("click", () => {
     gameState.paused = !gameState.paused;
@@ -44,12 +51,6 @@ if (savedData) {
     gameState.zone = parsed.zone;
     gameState.inventory = parsed.inventory;
     updateUI();
-}
-
-function updateUI() {
-    hpVal.innerText = gameState.hp;
-    zoneVal.innerText = gameState.zone;
-    inventoryVal.innerText = gameState.inventory;
 }
 
 // Sistema de Audio 8-bit (Web Audio API)
