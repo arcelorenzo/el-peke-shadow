@@ -1,5 +1,5 @@
 // ==========================================
-// EL PEQUEÑO SHADOW - MOTOR DE JUEGO
+// EL PEQUEÑO SHADOW - MOTOR DE JUEGO COMPLETO
 // ==========================================
 
 const translations = {
@@ -60,6 +60,13 @@ const translations = {
 };
 
 let currentLang = 'es';
+let gameData = {
+    day: 9,
+    level: 1,
+    hp: 25,
+    maxHp: 25,
+    mouth: "🍖🍖"
+};
 
 function changeLanguage(lang) {
     currentLang = lang;
@@ -68,15 +75,22 @@ function changeLanguage(lang) {
     const btnStart = document.getElementById("btn-start");
     const lblVol = document.getElementById("lbl-volume");
     const lblBri = document.getElementById("lbl-brightness");
+    const txtDay = document.getElementById("txt-day");
+    const txtLevel = document.getElementById("txt-level");
+    const txtMouth = document.getElementById("txt-mouth");
     
     if (mainTitle) mainTitle.textContent = t.title;
     if (btnStart) btnStart.textContent = t.start;
     if (lblVol) lblVol.textContent = t.vol;
     if (lblBri) lblBri.textContent = t.bri;
+    if (txtDay) txtDay.textContent = t.day;
+    if (txtLevel) txtLevel.textContent = t.level;
+    if (txtMouth) txtMouth.textContent = t.mouth;
 }
 
 function changeBrightness(val) {
-    document.getElementById("game-body").style.filter = `brightness(${val})`;
+    const body = document.getElementById("game-body");
+    if (body) body.style.filter = `brightness(${val})`;
 }
 
 // Sintetizador Web Audio API de 8-bits
@@ -129,6 +143,36 @@ function startAdventure() {
     
     if (optionsScreen) optionsScreen.classList.add("hidden");
     if (gameContainer) gameContainer.classList.remove("hidden");
+}
+
+function togglePause() {
+    playSound('slash');
+    alert("⏸️ Juego en Pausa. ¡Tómate un respiro, Lobichua!");
+}
+
+function saveGame() {
+    playSound('heal');
+    localStorage.setItem('pequenoShadowSave', JSON.stringify(gameData));
+    alert("💾 ¡Progreso guardado con éxito!");
+}
+
+function useMouthReserve() {
+    playSound('heal');
+    if (gameData.hp < gameData.maxHp) {
+        gameData.hp = Math.min(gameData.maxHp, gameData.hp + 5);
+        document.getElementById("ui-hp").textContent = gameData.hp;
+        alert("🥩 Has consumido carne de tu reserva. ¡+5 HP recuperados!");
+    } else {
+        alert("❤️ ¡Ya tienes la vida al máximo!");
+    }
+}
+
+function handleGameAction() {
+    playSound('slash');
+    gameData.day += 1;
+    document.getElementById("ui-day").textContent = gameData.day;
+    document.getElementById("screen-title").textContent = `Día ${gameData.day} — El Camino en la Sombra`;
+    document.getElementById("dialogue-text").textContent = "Avanzas sigilosamente entre la maleza helada. El peligro acecha, pero tu instinto de supervivencia te guía hacia adelante.";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
