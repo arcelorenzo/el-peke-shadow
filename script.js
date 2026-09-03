@@ -41,14 +41,15 @@ const hugeMap = [
 
 const tileColors = { 0: "#141010", 1: "#4a3b32", 2: "#00ffcc" };
 
-const player = { x: 20, y: 20, w: 10, h: 10, speed: 2, isAlive: true };
+// Spawn seguro en una celda libre del pasillo superior izquierdo
+const player = { x: 32, y: 32, w: 10, h: 10, speed: 2, isAlive: true };
 const camera = { x: 0, y: 0, width: canvas.width, height: canvas.height };
 const TORCH_RADIUS = 45;
 let blinkTimer = 0;
 
 const enemies = [
-    { x: 120, y: 20,  w: 10, h: 10, vx: 1.5, vy: 0,   color: "#ff3333" },
-    { x: 300, y: 80,  w: 10, h: 10, vx: -1.5, vy: 0,  color: "#ff3333" },
+    { x: 180, y: 80,  w: 10, h: 10, vx: 1.5, vy: 0,   color: "#ff3333" },
+    { x: 300, y: 120, w: 10, h: 10, vx: -1.5, vy: 0,  color: "#ff3333" },
     { x: 240, y: 176, w: 10, h: 10, vx: 0,   vy: 1.5, color: "#ff3333" },
     { x: 420, y: 208, w: 10, h: 10, vx: 1.2, vy: 0,   color: "#ff3333" }
 ];
@@ -60,7 +61,6 @@ window.addEventListener("keydown", e => {
     }
     keys[e.code] = true;
 
-    // --- CONTROLES EN EL MENÚ PRINCIPAL ---
     if (currentScene === "MENU") {
         if (e.code === "Enter") {
             currentScene = "GAMEPLAY";
@@ -69,7 +69,6 @@ window.addEventListener("keydown", e => {
             currentOptionIndex = 0;
         }
     }
-    // --- CONTROLES EN EL MENÚ DE OPCIONES ---
     else if (currentScene === "OPTIONS") {
         if (e.code === "ArrowDown") {
             currentOptionIndex = (currentOptionIndex + 1) % TOTAL_OPTIONS;
@@ -94,7 +93,6 @@ window.addEventListener("keydown", e => {
             }
         }
     }
-    // --- CONTROLES DE GAME OVER ---
     else if (currentScene === "GAMEPLAY" && !player.isAlive && e.code === "Enter") {
         restartGame();
     }
@@ -113,9 +111,9 @@ function checkCollision(nextX, nextY, width, height) {
 }
 
 function restartGame() {
-    player.x = 20; player.y = 20; player.isAlive = true;
+    player.x = 32; player.y = 32; player.isAlive = true;
     currentScene = "GAMEPLAY";
-    enemies[0].x = 120; enemies[0].vx = 1.5;
+    enemies[0].x = 180; enemies[0].vx = 1.5;
     enemies[1].x = 300; enemies[1].vx = -1.5;
     enemies[2].y = 176; enemies[2].vy = 1.5;
     enemies[3].x = 420; enemies[3].vx = 1.2;
@@ -166,7 +164,6 @@ function update() {
 function draw() {
     ctx.fillStyle = "#000000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ================= MAIN MENU =================
     if (currentScene === "MENU") {
         ctx.fillStyle = "#00ffcc"; ctx.font = "8px 'Press Start 2P'"; ctx.textAlign = "center";
         ctx.fillText("8-BIT MASTER ENGINE", canvas.width / 2, 100);
@@ -177,7 +174,6 @@ function draw() {
         ctx.fillStyle = "#70708a"; ctx.font = "6px 'Press Start 2P'";
         ctx.fillText("PRESIONA [↓] PARA AJUSTES", canvas.width / 2, 170);
     } 
-    // ================= OPTIONS MENU =================
     else if (currentScene === "OPTIONS") {
         ctx.textAlign = "left";
         ctx.fillStyle = "#00ffcc"; ctx.font = "8px 'Press Start 2P'";
@@ -194,7 +190,6 @@ function draw() {
             ctx.fillText(">", 25, cursorY);
         }
     }
-    // ================= GAMEPLAY =================
     else if (currentScene === "GAMEPLAY") {
         ctx.save();
         ctx.translate(-Math.floor(camera.x), -Math.floor(camera.y));
@@ -231,7 +226,6 @@ function draw() {
             ctx.drawImage(mask, 0, 0);
         }
 
-        // Si el radar está activado en las opciones, se dibuja
         if (radarEnabled) {
             const M_TILE = 2; const mX = canvas.width - (MAP_COLS * M_TILE) - 10; const mY = 10;
             ctx.fillStyle = "rgba(0, 0, 0, 0.85)"; ctx.fillRect(mX - 2, mY - 2, (MAP_COLS * M_TILE) + 4, (MAP_ROWS * M_TILE) + 4);
