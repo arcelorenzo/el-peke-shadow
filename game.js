@@ -1,4 +1,4 @@
-// --- JUEGO PRINCIPAL: SHADOW EL LOBO (game.js) ---
+// --- JUEGO PRINCIPAL: SHADOW EL LOBO (game.js con Animación de 89 Frames) ---
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -14,12 +14,25 @@ let gameState = {
     daysToSnow: 9
 };
 
-// Carga de imágenes
+// Carga de Fondo
 const bgZone1 = new Image();
 bgZone1.src = "fondo_montana_zona1.png"; 
 
-const shadowSprite = new Image();
-shadowSprite.src = "videoframe_640.png";
+// --- CARGA AUTOMÁTICA DE LOS 89 FRAMES DE SHADOW ---
+const shadowFrames = [];
+const totalFrames = 89;
+
+for (let i = 1; i <= totalFrames; i++) {
+    const img = new Image();
+    // ⚠️ ATENCIÓN: Si tus archivos se llaman diferente (ej: shadow_1.png o videoframe_640_1.png),
+    // modifica esta línea para que coincida exactamente con cómo los guardaste.
+    img.src = `videoframe_640 (${i}).png`; 
+    shadowFrames.push(img);
+}
+
+// Control de animación de los frames
+let currentFrameIndex = 0;
+let frameCounter = 0;
 
 // Elementos de la Interfaz
 const hpVal = document.getElementById("hp-val");
@@ -158,6 +171,14 @@ function gameLoop() {
         if (keys['ArrowRight'] || keys['d'] || keys['D']) player.dx = currentSpeed;
         if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.dx = -currentSpeed;
 
+        // Animación de los frames (avanza cada 5 ticks si se está moviendo)
+        if (player.dx !== 0) {
+            frameCounter++;
+            if (frameCounter % 5 === 0) {
+                currentFrameIndex = (currentFrameIndex + 1) % shadowFrames.length;
+            }
+        }
+
         // Agacharse
         if (keys['ArrowDown'] || keys['s'] || keys['S']) {
             player.isCrouched = true;
@@ -212,14 +233,16 @@ function gameLoop() {
             ctx.fillRect(610, 275, 12, 12);
         }
 
-        // Dibujar Sprite del lobo
-        if (shadowSprite.complete && shadowSprite.naturalWidth !== 0) {
-            ctx.drawImage(shadowSprite, player.x, player.y, player.width, player.height);
+        // --- RENDERIZAR EL FRAME ACTUAL DE SHADOW ---
+        const activeSprite = shadowFrames[currentFrameIndex];
+        if (activeSprite && activeSprite.complete && activeSprite.naturalWidth !== 0) {
+            ctx.drawImage(activeSprite, player.x, player.y, player.width, player.height);
             if (gameState.furyMode) {
                 ctx.fillStyle = "rgba(239, 68, 68, 0.35)";
                 ctx.fillRect(player.x, player.y, player.width, player.height);
             }
         } else {
+            // Respaldo por si algún frame no cargó bien
             ctx.fillStyle = gameState.furyMode ? "#ef4444" : "#111111";
             ctx.fillRect(player.x, player.y, player.width, player.height);
         }
