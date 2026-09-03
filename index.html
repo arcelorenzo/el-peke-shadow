@@ -8,12 +8,12 @@
 </head>
 <body id="game-body">
 
-    <!-- Pantalla de Configuración Inicial (Idioma, Brillo, Volumen) -->
+    <!-- Pantalla de Configuración Inicial -->
     <div id="options-screen" class="screen">
         <h1 id="main-title" class="game-main-title">EL PEQUEÑO SHADOW</h1>
         <div class="options-box">
             <label>🌐 Idioma / Language:</label>
-            <select id="lang-select" onchange="changeLanguage(this.value)">
+            <select id="language-select" onchange="changeLanguage(this.value)">
                 <option value="es">Español</option>
                 <option value="en">English</option>
                 <option value="it">Italiano</option>
@@ -33,23 +33,20 @@
 
     <!-- Contenedor Principal del Juego -->
     <div id="game-container" class="hidden">
-        <!-- Top Bar: Pausa y Guardado -->
         <div class="top-control-bar">
             <button class="mini-btn" onclick="togglePause()">⏸️ Pausa</button>
             <button class="mini-btn" onclick="saveGame()">💾 Guardar</button>
         </div>
 
-        <!-- Barra de Estadísticas Global -->
         <div class="stats-bar">
             <div class="stat-item"><span id="txt-day">Día</span>: <span id="ui-day">9</span></div>
             <div class="stat-item"><span id="txt-level">Nivel</span>: <span id="ui-level">1</span></div>
             <div class="stat-item">HP: <span id="ui-hp">25</span>/<span id="ui-max-hp">25</span></div>
-            <div class="stat-item" onclick="useMouthReserve()" style="cursor: pointer;" title="Haz clic para digerir carne (+5 HP)">
+            <div class="stat-item" onclick="useMouthReserve()" style="cursor: pointer;" title="Haz clic para digerir carne">
                 <span id="txt-mouth">Colmillos</span>: <span id="ui-mouth">🍖🍖</span> 🐾
             </div>
         </div>
 
-        <!-- Vista Dinámica del Juego -->
         <div id="game-viewport">
             <h2 class="screen-title" id="screen-title">Día 9 — El Nido del Águila</h2>
             <div class="dialogue-box" id="dialogue-text">
@@ -63,6 +60,6 @@
         </div>
     </div>
 
-    <script src="game.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
