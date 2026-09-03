@@ -86,29 +86,29 @@
     </div>
 
 <script>
+// --- 1. CONFIGURACIÓN Y RECURSOS ---
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Estado completo del juego
+// Estado global del juego
 let gameState = {
     hp: 85,
     maxHp: 85,
     zone: 1,
     inventory: "Vacío",
-    score: 0,
     paused: false,
     furyMode: false,
     daysToSnow: 9
 };
 
-// Carga de imágenes reales
+// Carga de imágenes (Asegúrate de que los nombres coincidan con tus archivos)
 const bgZone1 = new Image();
-bgZone1.src = "23ab9479b2f555bda9af1f71329ef902"; 
+bgZone1.src = "fondo_montana_zona1.png"; 
 
 const shadowSprite = new Image();
-shadowSprite.src = "videoframe_640"; 
+shadowSprite.src = "videoframe_640.png"; // Si es .jpg o .png, ajusta la extensión aquí si fuera necesario
 
-// Referencias UI
+// Referencias de la Interfaz (UI)
 const hpVal = document.getElementById("hp-val");
 const zoneVal = document.getElementById("zone-val");
 const inventoryVal = document.getElementById("inventory-val");
@@ -119,7 +119,7 @@ function updateUI() {
     inventoryVal.innerText = gameState.inventory;
 }
 
-// Control de botones de interfaz
+// Botones de Interfaz
 document.getElementById("btn-pause").addEventListener("click", () => {
     gameState.paused = !gameState.paused;
     document.getElementById("btn-pause").innerText = gameState.paused ? "Reanudar" : "Pausa";
@@ -130,7 +130,7 @@ document.getElementById("btn-save").addEventListener("click", () => {
     alert("¡Partida guardada con éxito!");
 });
 
-// Cargar partida guardada si existe
+// Cargar partida guardada previamente
 const savedData = localStorage.getItem("lobo_save");
 if (savedData) {
     const parsed = JSON.parse(savedData);
@@ -140,7 +140,7 @@ if (savedData) {
     updateUI();
 }
 
-// Sistema de Audio 8-bit
+// --- 2. SISTEMA DE AUDIO 8-BIT ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSound(frequency, type, duration) {
     if (audioCtx.state === 'suspended') {
@@ -162,7 +162,7 @@ function playSound(frequency, type, duration) {
     oscillator.stop(audioCtx.currentTime + duration);
 }
 
-// Objeto del Personaje (Shadow)
+// --- 3. OBJETOS Y ENTIDADES ---
 let player = {
     x: 100,
     y: 320,
@@ -176,11 +176,10 @@ let player = {
     actionText: ""
 };
 
-// Entidades por Zonas
 let eagle = { x: 500, y: 80, width: 60, height: 30, speed: 1.5, active: true };
 let bear = { x: 600, y: 290, width: 65, height: 50, present: true };
 
-// Control por Teclado
+// --- 4. CONTROLES DE TECLADO ---
 const keys = {};
 
 window.addEventListener("keydown", (e) => {
@@ -191,7 +190,7 @@ window.addEventListener("keydown", (e) => {
         gameState.furyMode = !gameState.furyMode;
     }
 
-    // Pausa con Escape
+    // Pausa con 'Escape'
     if (e.key === 'Escape') {
         gameState.paused = !gameState.paused;
         document.getElementById("btn-pause").innerText = gameState.paused ? "Reanudar" : "Pausa";
@@ -199,7 +198,7 @@ window.addEventListener("keydown", (e) => {
 
     if (gameState.paused) return;
 
-    // Acciones de Combate
+    // Acciones de Combate con Sonido
     if (e.key === "z" || e.key === "Z") {
         player.actionText = "¡Zarpazos Rápidos! (Z)";
         playSound(400, 'square', 0.1);
@@ -226,12 +225,12 @@ window.addEventListener("keyup", (e) => {
     keys[e.key] = false;
 });
 
-// Bucle principal
+// --- 5. BUCLE PRINCIPAL DEL JUEGO ---
 function gameLoop() {
     if (!gameState.paused) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Fondo Real
+        // Fondo (Si carga la imagen se dibuja, si falla muestra un color sólido de respaldo)
         if (bgZone1.complete && bgZone1.naturalWidth !== 0) {
             ctx.drawImage(bgZone1, 0, 0, canvas.width, canvas.height);
         } else {
@@ -243,7 +242,7 @@ function gameLoop() {
         ctx.fillStyle = "rgba(43, 24, 16, 0.7)";
         ctx.fillRect(0, 375, canvas.width, 75);
 
-        // Movimiento
+        // Movimiento Horizontal (Flechas o W/A/S/D)
         let currentSpeed = gameState.furyMode ? player.speed * 1.5 : player.speed;
         player.dx = 0;
         if (keys['ArrowRight'] || keys['d'] || keys['D']) player.dx = currentSpeed;
@@ -288,7 +287,7 @@ function gameLoop() {
             }
         }
 
-        // Renderizar Águila (Zona 1)
+        // Entidades por Zona
         if (gameState.zone === 1 && eagle.active) {
             ctx.fillStyle = "#3d2314";
             ctx.fillRect(eagle.x, eagle.y, eagle.width, eagle.height);
@@ -296,7 +295,6 @@ function gameLoop() {
             if (eagle.x < -70) eagle.x = canvas.width + 50;
         }
 
-        // Renderizar Oso (Zona 2)
         if (gameState.zone === 2 && bear.present) {
             ctx.fillStyle = "#4a3525";
             ctx.fillRect(580, 290, 65, 50);
@@ -304,7 +302,7 @@ function gameLoop() {
             ctx.fillRect(610, 275, 12, 12);
         }
 
-        // Renderizar a Shadow
+        // Renderizar a Shadow (Sprite o Cuadrado de respaldo si falla)
         if (shadowSprite.complete && shadowSprite.naturalWidth !== 0) {
             ctx.drawImage(shadowSprite, player.x, player.y, player.width, player.height);
             if (gameState.furyMode) {
@@ -316,22 +314,22 @@ function gameLoop() {
             ctx.fillRect(player.x, player.y, player.width, player.height);
         }
 
-        // Feedback de ataques
+        // Texto flotante de ataques
         if (player.actionText !== "") {
             ctx.fillStyle = "#facc15";
             ctx.font = "bold 13px 'Courier New'";
             ctx.fillText(player.actionText, player.x - 10, player.y - 12);
         }
 
-        // Info en canvas
+        // Textos de estado en pantalla
         ctx.fillStyle = "#ffffff";
         ctx.font = "11px 'Courier New'";
         ctx.fillText(`Furia (F): ${gameState.furyMode ? "ACTIVADA" : "INACTIVA"} | Nieve en: ${gameState.daysToSnow}d`, 15, 25);
         
         ctx.fillStyle = "#8b949e";
-        ctx.fillText("Flechas = Mover/Salto/Agachar | Z=Zarpazo X=Mordisco C=Embestida Espacio=Coletazo F=Furia", 15, 435);
+        ctx.fillText("Flechas/WASD = Mover/Salto/Agachar | Z=Zarpazo X=Mordisco C=Embestida Espacio=Coletazo", 15, 435);
     } else {
-        // Pantalla de Pausa dentro del canvas
+        // Pantalla de Pausa
         ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
@@ -341,11 +339,12 @@ function gameLoop() {
         
         ctx.font = "16px 'Courier New'";
         ctx.fillStyle = "#cbd5e1";
-        ctx.fillText("▶ Presiona [ Esc ] o el botón para Reanudar", 195, 230);
+        ctx.fillText("▶ Presiona [ Esc ] para Reanudar", 225, 230);
     }
     requestAnimationFrame(gameLoop);
 }
 
+// Iniciar aplicación
 updateUI();
 gameLoop();
 </script>
