@@ -67,41 +67,69 @@ function playSound(frequency, type, duration) {
     oscillator.stop(audioCtx.currentTime + duration);
 }
 
-// Objeto del Personaje (Shadow / Lobito)
+// Objeto del Personaje (Shadow / Lobito) con físicas de salto y agachamiento
 let player = {
     x: 100,
     y: 330,
-    width: 30,
-    height: 50,
+    width: 35,
+    height: 40,
     speed: 4,
-    dx: 0
+    dx: 0,
+    dy: 0,
+    isJumping: false,
+    isCrouched: false,
+    actionText: ""
 };
 
-// Controles de movimiento
+// Control Avanzado por Teclado
+const keys = {};
+
 window.addEventListener("keydown", (e) => {
+    keys[e.key] = true;
+
+    // Activar Furia con 'f' o 'F'
+    if (e.key === 'f' || e.key === 'F') {
+        gameState.furyMode = !gameState.furyMode;
+    }
+
     if (gameState.paused) return;
-    if (e.key === "ArrowRight" || e.key === "d") player.dx = player.speed;
-    if (e.key === "ArrowLeft" || e.key === "a") player.dx = -player.speed;
-    if (e.key === " " || e.key === "ArrowUp") {
-        // Acción de ataque o salto / morder
-        playSound(300, 'square', 0.15);
+
+    // Acciones de Combate y Sonido
+    if (e.key === "z" || e.key === "Z") {
+        player.actionText = "¡Zarpazos Rápidos! (Z)";
+        playSound(400, 'square', 0.1);
+        setTimeout(() => player.actionText = "", 600);
+    }
+    if (e.key === "x" || e.key === "X") {
+        player.actionText = "¡Mordisco Feroz! (X)";
+        playSound(250, 'sawtooth', 0.15);
+        setTimeout(() => player.actionText = "", 600);
+    }
+    if (e.key === "c" || e.key === "C") {
+        player.actionText = "¡Embestida / Bloqueo! (C)";
+        playSound(500, 'triangle', 0.12);
+        setTimeout(() => player.actionText = "", 600);
+    }
+    if (e.code === "Space") {
+        player.actionText = "¡Coletazo Cargado! (Espacio)";
+        playSound(180, 'square', 0.2);
+        setTimeout(() => player.actionText = "", 800);
     }
 });
 
 window.addEventListener("keyup", (e) => {
-    if ((e.key === "ArrowRight" || e.key === "d") && player.dx > 0) player.dx = 0;
-    if ((e.key === "ArrowLeft" || e.key === "a") && player.dx < 0) player.dx = 0;
+    keys[e.key] = false;
 });
 
 // Bucle principal del motor del juego
 function gameLoop() {
     if (!gameState.paused) {
-        // Limpiar pantalla
+        // 1. Limpiar pantalla
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Fondo atmosférico según la zona actual (Bosques, ríos, rocas, nieve)
+        // 2. Fondo atmosférico según la zona actual
         if (gameState.zone <= 2) {
-            ctx.fillStyle = "#09192f"; // Bosque nocturno
+            ctx.fillStyle = "#09192f"; // Bosque nocturno / Montaña
         } else if (gameState.zone <= 4) {
             ctx.fillStyle = "#112233"; // Ríos y rocas
         } else {
@@ -109,24 +137,78 @@ function gameLoop() {
         }
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Dibujar suelo del mapa diverso
+        // 3. Dibujar suelo del mapa
         ctx.fillStyle = "#1b2a47";
         ctx.fillRect(0, 380, canvas.width, 70);
 
-        // Actualizar posición del jugador
+        // 4. Gestión de Movimiento Horizontal (Flechas o A/D)
+        let currentSpeed = gameState.furyMode ? player.speed * 1.5 : player.speed;
+        player.dx = 0;
+        if (keys['ArrowRight'] || keys['d'] || keys['D']) player.dx = currentSpeed;
+        if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.dx = -currentSpeed;
+
+        // Agacharse (Flecha Abajo)
+        if (keys['ArrowDown']) {
+            player.isCrouched = true;
+            player.height = 25;
+            player.y = 355;
+        } else {
+            player.isCrouched = false;
+            player.height = 40;
+            player.y = 340;
+        }
+
+        // Salto (Flecha Arriba)
+        if ((keys['ArrowUp'] || keys['w'] || keys['W']) && !player.isJumping && !player.isCrouched) {
+            player.isJumping = true;
+            player.dy = -8;
+            playSound(600, 'sine', 0.1);
+        }
+
+        // Física de salto
+        if (player.isJumping) {
+            player.y += player.dy;
+            player.dy += 0.4; // Gravedad
+            if (player.y >= 340) {
+                player.y = 340;
+                player.isJumping = false;
+                player.dy = 0;
+            }
+        }
+
         player.x += player.dx;
         if (player.x < 0) player.x = 0;
-        if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+        if (player.x > canvas.width - player.width) {
+            player.x = 0;
+            if (gameState.zone < 6) {
+                gameState.zone++;
+                updateUI();
+            }
+        }
 
-        // Renderizar al personaje (temporalmente en bloque de color hasta cargar spritesheets)
-        ctx.fillStyle = gameState.furyMode ? "#ef4444" : "#58a6ff"; // Rojo si está en furia, celeste normal
+        // 5. Renderizar a Shadow (Lobito azabache o modo furia rojo)
+        ctx.fillStyle = gameState.furyMode ? "#ef4444" : "#111111";
         ctx.fillRect(player.x, player.y, player.width, player.height);
 
-        // Información en pantalla de la aventura
+        // Ojos de Miel (o destello en furia)
+        ctx.fillStyle = gameState.furyMode ? "#ffffff" : "#fbbf24";
+        ctx.fillRect(player.x + 22, player.y + (player.isCrouched ? 5 : 10), 5, 4);
+
+        // Mostrar texto de ataque en pantalla si se usa una tecla
+        if (player.actionText !== "") {
+            ctx.fillStyle = "#facc15";
+            ctx.font = "bold 13px 'Courier New'";
+            ctx.fillText(player.actionText, player.x - 10, player.y - 12);
+        }
+
+        // 6. Información y Estado en Pantalla
         ctx.fillStyle = "#8b949e";
-        ctx.font = "12px 'Courier New'";
-        ctx.fillText(`Mapa Activo - Zona ${gameState.zone}: Bosques, Ríos, Rocas y Bichos`, 20, 30);
-        ctx.fillText(`Modo Furia: ${gameState.furyMode ? "Activado" : "Inactivo"} | Escudo: ${gameState.bossShield ? "Activo" : "Ninguno"}`, 20, 50);
+        ctx.font = "11px 'Courier New'";
+        ctx.fillText(`Zona ${gameState.zone}: Aventura del Lobito`, 15, 25);
+        ctx.fillText(`Furia (F): ${gameState.furyMode ? "ACTIVADA" : "INACTIVA"}`, 15, 42);
+        
+        ctx.fillStyle = "#64748b";
+        ctx.fillText("Controles: Flechas=Mover/Salto/Agachar | Z=Zarpazo X=Mordisco C=Embestida Espacio=Coletazo", 15, 435);
     }
     requestAnimationFrame(gameLoop);
 }
