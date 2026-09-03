@@ -1,5 +1,5 @@
 // ==========================================
-// EL PEQUEÑO SHADOW - MOTOR DE JUEGO DEFINITIVO
+// EL PEQUEÑO SHADOW - MOTOR DE JUEGO (ESTILO 8-BIT)
 // ==========================================
 
 const translations = {
@@ -93,7 +93,7 @@ function changeBrightness(val) {
     if (body) body.style.filter = `brightness(${val})`;
 }
 
-// Sintetizador Web Audio API de 8-bits
+// Sintetizador Web Audio API de 8-bits (Chip RP2A03 simulado)
 let audioCtx = null;
 
 function playSound(type) {
@@ -153,7 +153,7 @@ function togglePause() {
 function saveGame() {
     playSound('heal');
     localStorage.setItem('pequenoShadowSave', JSON.stringify(gameData));
-    alert("💾 ¡Progreso guardado con éxito!");
+    alert("💾 ¡Progreso guardado con éxito en la memoria del sistema!");
 }
 
 function useMouthReserve() {
