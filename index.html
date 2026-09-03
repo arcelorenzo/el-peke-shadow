@@ -5,68 +5,182 @@
     <title>Shadow: El Pequeño Lobo — Modo Supervivencia</title>
     <style>
         body {
-            background-color: #050508;
-            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            background-color: #0d1117;
+            color: #c9d1d9;
             font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        canvas {
-            border: 2px solid #334155;
+            border: 2px solid #30363d;
+            background-color: #161b22;
+            padding: 10px;
+            border-radius: 8px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-            background-color: #0d1b2a;
+        }
+
+        #ui-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        button {
+            background-color: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        button:hover {
+            background-color: #30363d;
+        }
+
+        canvas {
+            background-color: #040d21;
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            border: 1px solid #30363d;
+        }
+
+        #inventory-bar {
+            width: 100%;
+            margin-top: 8px;
+            font-size: 13px;
+            text-align: left;
         }
     </style>
 </head>
 <body>
 
-    <canvas id="gameCanvas" width="800" height="450"></canvas>
+    <div id="game-container">
+        <div id="ui-header">
+            <span>HP: <span id="hp-val">85</span>/85</span>
+            <span>Zona: <span id="zone-val">1</span></span>
+            <button id="btn-pause">Pausa</button>
+            <button id="btn-save">Guardar</button>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+        <div id="inventory-bar">
+            Reserva / Inventario: <span id="inventory-val">Vacío</span>
+        </div>
+    </div>
 
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// 1. Configuración de Imágenes
-const bgZone1 = new Image();
-bgZone1.src = "fondo_montana_zona1.png"; 
-
-// Estado Global del Juego
+// Estado completo del juego
 let gameState = {
+    hp: 85,
+    maxHp: 85,
     zone: 1,
+    inventory: "Vacío",
+    score: 0,
     paused: false,
     furyMode: false,
-    hp: 100,
-    daysToSnow: 9,
-    level: 1,
-    xp: 0
+    daysToSnow: 9
 };
+
+// Carga de imágenes reales
+const bgZone1 = new Image();
+bgZone1.src = "23ab9479b2f555bda9af1f71329ef902"; 
+
+const shadowSprite = new Image();
+shadowSprite.src = "videoframe_640"; 
+
+// Referencias UI
+const hpVal = document.getElementById("hp-val");
+const zoneVal = document.getElementById("zone-val");
+const inventoryVal = document.getElementById("inventory-val");
+
+function updateUI() {
+    hpVal.innerText = Math.round(gameState.hp);
+    zoneVal.innerText = gameState.zone;
+    inventoryVal.innerText = gameState.inventory;
+}
+
+// Control de botones de interfaz
+document.getElementById("btn-pause").addEventListener("click", () => {
+    gameState.paused = !gameState.paused;
+    document.getElementById("btn-pause").innerText = gameState.paused ? "Reanudar" : "Pausa";
+});
+
+document.getElementById("btn-save").addEventListener("click", () => {
+    localStorage.setItem("lobo_save", JSON.stringify(gameState));
+    alert("¡Partida guardada con éxito!");
+});
+
+// Cargar partida guardada si existe
+const savedData = localStorage.getItem("lobo_save");
+if (savedData) {
+    const parsed = JSON.parse(savedData);
+    gameState.hp = parsed.hp;
+    gameState.zone = parsed.zone;
+    gameState.inventory = parsed.inventory;
+    updateUI();
+}
+
+// Sistema de Audio 8-bit
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(frequency, type, duration) {
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+    
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + duration);
+}
 
 // Objeto del Personaje (Shadow)
 let player = {
     x: 100,
-    y: 310,
-    width: 40,
-    height: 40,
-    speed: 3,
+    y: 320,
+    width: 45,
+    height: 45,
+    speed: 4,
     dx: 0,
     dy: 0,
     isJumping: false,
     isCrouched: false,
-    injured: true,
-    actionText: "" // Para mostrar en pantalla qué ataque o movimiento realiza
+    actionText: ""
 };
 
-// Entidades del Juego por Zonas
+// Entidades por Zonas
 let eagle = { x: 500, y: 80, width: 60, height: 30, speed: 1.5, active: true };
 let bear = { x: 600, y: 290, width: 65, height: 50, present: true };
-let enemy = { type: null, x: 700, y: 310, width: 35, height: 35, active: false };
 
-// 2. Control Completo por Teclado (Flechas + Z, X, C, Space, F, Esc)
+// Control por Teclado
 const keys = {};
 
 window.addEventListener("keydown", (e) => {
@@ -77,29 +191,34 @@ window.addEventListener("keydown", (e) => {
         gameState.furyMode = !gameState.furyMode;
     }
 
-    // Pausar con 'Escape'
+    // Pausa con Escape
     if (e.key === 'Escape') {
         gameState.paused = !gameState.paused;
+        document.getElementById("btn-pause").innerText = gameState.paused ? "Reanudar" : "Pausa";
     }
 
-    // Acciones de Combate y Habilidades
-    if (!gameState.paused) {
-        if (e.key === 'z' || e.key === 'Z') {
-            player.actionText = "¡Zarpazos Rápidos! (Z)";
-            setTimeout(() => player.actionText = "", 600);
-        }
-        if (e.key === 'x' || e.key === 'X') {
-            player.actionText = "¡Mordisco Feroz! (X)";
-            setTimeout(() => player.actionText = "", 600);
-        }
-        if (e.key === 'c' || e.key === 'C') {
-            player.actionText = "¡Embestida / Bloqueo! (C)";
-            setTimeout(() => player.actionText = "", 600);
-        }
-        if (e.code === 'Space') {
-            player.actionText = "¡Coletazo Cargado! (Espacio)";
-            setTimeout(() => player.actionText = "", 800);
-        }
+    if (gameState.paused) return;
+
+    // Acciones de Combate
+    if (e.key === "z" || e.key === "Z") {
+        player.actionText = "¡Zarpazos Rápidos! (Z)";
+        playSound(400, 'square', 0.1);
+        setTimeout(() => player.actionText = "", 600);
+    }
+    if (e.key === "x" || e.key === "X") {
+        player.actionText = "¡Mordisco Feroz! (X)";
+        playSound(250, 'sawtooth', 0.15);
+        setTimeout(() => player.actionText = "", 600);
+    }
+    if (e.key === "c" || e.key === "C") {
+        player.actionText = "¡Embestida / Bloqueo! (C)";
+        playSound(500, 'triangle', 0.12);
+        setTimeout(() => player.actionText = "", 600);
+    }
+    if (e.code === "Space") {
+        player.actionText = "¡Coletazo Cargado! (Espacio)";
+        playSound(180, 'square', 0.2);
+        setTimeout(() => player.actionText = "", 800);
     }
 });
 
@@ -107,170 +226,112 @@ window.addEventListener("keyup", (e) => {
     keys[e.key] = false;
 });
 
-// 3. Lógica de Actualización
-function updateGameLogic() {
-    if (gameState.paused) return;
+// Bucle principal
+function gameLoop() {
+    if (!gameState.paused) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    let currentSpeed = player.injured ? player.speed * 0.7 : player.speed;
-    if (gameState.furyMode) currentSpeed *= 1.6;
-
-    // Movimiento Horizontal (Flechas Izquierda / Derecha)
-    player.dx = 0;
-    if (keys['ArrowLeft']) player.dx = -currentSpeed;
-    if (keys['ArrowRight']) player.dx = currentSpeed;
-
-    // Agacharse / Esconderse (Flecha Abajo)
-    if (keys['ArrowDown']) {
-        player.isCrouched = true;
-        player.height = 25; // Se reduce la altura al agacharse
-        player.y = 325;
-    } else {
-        player.isCrouched = false;
-        player.height = 40;
-        player.y = 310;
-    }
-
-    // Salto (Flecha Arriba)
-    if (keys['ArrowUp'] && !player.isJumping && !player.isCrouched) {
-        player.isJumping = true;
-        player.dy = -8;
-    }
-
-    // Física básica de salto
-    if (player.isJumping) {
-        player.y += player.dy;
-        player.dy += 0.4; // Gravedad
-        if (player.y >= 310) {
-            player.y = 310;
-            player.isJumping = false;
-            player.dy = 0;
+        // Fondo Real
+        if (bgZone1.complete && bgZone1.naturalWidth !== 0) {
+            ctx.drawImage(bgZone1, 0, 0, canvas.width, canvas.height);
+        } else {
+            ctx.fillStyle = gameState.furyMode ? "#2a0808" : "#0d1b2a";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-    }
 
-    player.x += player.dx;
+        // Suelo
+        ctx.fillStyle = "rgba(43, 24, 16, 0.7)";
+        ctx.fillRect(0, 375, canvas.width, 75);
 
-    // Límites y Transición de Zonas
-    if (player.x < 0) player.x = 0;
-    if (player.x > canvas.width - player.width) {
-        player.x = 0;
-        if (gameState.zone < 4) {
-            gameState.zone++;
-            if (gameState.daysToSnow > 1) gameState.daysToSnow--;
+        // Movimiento
+        let currentSpeed = gameState.furyMode ? player.speed * 1.5 : player.speed;
+        player.dx = 0;
+        if (keys['ArrowRight'] || keys['d'] || keys['D']) player.dx = currentSpeed;
+        if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.dx = -currentSpeed;
+
+        // Agacharse
+        if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+            player.isCrouched = true;
+            player.height = 30;
+            player.y = 345;
+        } else {
+            player.isCrouched = false;
+            player.height = 45;
+            player.y = 330;
         }
-    }
 
-    // Comportamiento de Enemigos y Zonas
-    if (gameState.zone === 3) {
-        enemy.type = "raccoon";
-        enemy.active = true;
-        if (Math.abs(player.x - enemy.x) < 50 && !player.isCrouched) {
-            if (!gameState.furyMode) gameState.hp -= 0.15;
-            else { gameState.xp += 2; if (gameState.xp >= 100) { gameState.level++; gameState.xp = 0; } }
+        // Salto
+        if ((keys['ArrowUp'] || keys['w'] || keys['W']) && !player.isJumping && !player.isCrouched) {
+            player.isJumping = true;
+            player.dy = -8;
+            playSound(600, 'sine', 0.1);
         }
-    } else if (gameState.zone === 4) {
-        enemy.type = "fox";
-        enemy.active = true;
-        if (Math.abs(player.x - enemy.x) < 50) {
-            if (gameState.furyMode || keys['c'] || keys['C']) {
-                enemy.x += 6; // Empuja al zorro con la embestida
-                gameState.xp += 5;
-            } else {
-                gameState.hp -= 0.25;
+
+        if (player.isJumping) {
+            player.y += player.dy;
+            player.dy += 0.4;
+            if (player.y >= 330) {
+                player.y = 330;
+                player.isJumping = false;
+                player.dy = 0;
             }
         }
+
+        player.x += player.dx;
+        if (player.x < 0) player.x = 0;
+        if (player.x > canvas.width - player.width) {
+            player.x = 0;
+            if (gameState.zone < 6) {
+                gameState.zone++;
+                if (gameState.daysToSnow > 1) gameState.daysToSnow--;
+                updateUI();
+            }
+        }
+
+        // Renderizar Águila (Zona 1)
+        if (gameState.zone === 1 && eagle.active) {
+            ctx.fillStyle = "#3d2314";
+            ctx.fillRect(eagle.x, eagle.y, eagle.width, eagle.height);
+            eagle.x -= 0.8;
+            if (eagle.x < -70) eagle.x = canvas.width + 50;
+        }
+
+        // Renderizar Oso (Zona 2)
+        if (gameState.zone === 2 && bear.present) {
+            ctx.fillStyle = "#4a3525";
+            ctx.fillRect(580, 290, 65, 50);
+            ctx.fillStyle = "#ffd166";
+            ctx.fillRect(610, 275, 12, 12);
+        }
+
+        // Renderizar a Shadow
+        if (shadowSprite.complete && shadowSprite.naturalWidth !== 0) {
+            ctx.drawImage(shadowSprite, player.x, player.y, player.width, player.height);
+            if (gameState.furyMode) {
+                ctx.fillStyle = "rgba(239, 68, 68, 0.35)";
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+            }
+        } else {
+            ctx.fillStyle = gameState.furyMode ? "#ef4444" : "#111111";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        // Feedback de ataques
+        if (player.actionText !== "") {
+            ctx.fillStyle = "#facc15";
+            ctx.font = "bold 13px 'Courier New'";
+            ctx.fillText(player.actionText, player.x - 10, player.y - 12);
+        }
+
+        // Info en canvas
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "11px 'Courier New'";
+        ctx.fillText(`Furia (F): ${gameState.furyMode ? "ACTIVADA" : "INACTIVA"} | Nieve en: ${gameState.daysToSnow}d`, 15, 25);
+        
+        ctx.fillStyle = "#8b949e";
+        ctx.fillText("Flechas = Mover/Salto/Agachar | Z=Zarpazo X=Mordisco C=Embestida Espacio=Coletazo F=Furia", 15, 435);
     } else {
-        enemy.active = false;
-    }
-
-    if (gameState.hp <= 0) {
-        gameState.hp = 0;
-        gameState.paused = true;
-    }
-}
-
-// 4. Renderizado Gráfico
-function renderGame() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Fondo
-    if (bgZone1.complete && bgZone1.naturalHeight !== 0) {
-        ctx.drawImage(bgZone1, 0, 0, canvas.width, canvas.height);
-    } else {
-        ctx.fillStyle = gameState.furyMode ? "#2a0808" : "#0d1b2a";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    // Suelo Dinámico
-    ctx.fillStyle = gameState.zone === 4 ? "#1b4332" : (gameState.zone === 3 ? "#1e293b" : "#2b1810");
-    ctx.fillRect(0, 380, canvas.width, 70);
-
-    // Águila (Zona 1)
-    if (gameState.zone === 1 && eagle.active) {
-        ctx.fillStyle = "#3d2314";
-        ctx.fillRect(eagle.x, eagle.y, eagle.width, eagle.height);
-        eagle.x -= 0.8;
-        if (eagle.x < -70) eagle.x = canvas.width + 50;
-    }
-
-    // Oso Maestro (Zona 2)
-    if (gameState.zone === 2 && bear.present) {
-        ctx.fillStyle = "#4a3525";
-        ctx.fillRect(580, 290, 65, 50);
-        ctx.fillStyle = "#ffd166";
-        ctx.fillRect(610, 275, 12, 12);
-    }
-
-    // Mapaches / Zorro (Zona 3 y 4)
-    if (gameState.zone === 3 && enemy.active) {
-        ctx.fillStyle = "#64748b";
-        ctx.fillRect(650, 315, 32, 32);
-    } else if (gameState.zone === 4 && enemy.active) {
-        ctx.fillStyle = "#e07a5f";
-        ctx.fillRect(630, 310, 35, 35);
-    }
-
-    // Renderizar a Shadow
-    ctx.fillStyle = gameState.furyMode ? "#ef4444" : "#111111";
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-
-    // Ojos (Miel o Furia)
-    ctx.fillStyle = gameState.furyMode ? "#ffffff" : "#fbbf24";
-    ctx.fillRect(player.x + 26, player.y + (player.isCrouched ? 6 : 10), 6, 4);
-
-    // Mostrar feedback de ataques en pantalla si presiona Z, X, C o Space
-    if (player.actionText !== "") {
-        ctx.fillStyle = "#facc15";
-        ctx.font = "bold 14px 'Courier New'";
-        ctx.fillText(player.actionText, player.x - 20, player.y - 15);
-    }
-
-    // UI Superior
-    ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-    ctx.fillRect(520, 15, 265, 75);
-    ctx.strokeStyle = gameState.furyMode ? "#ef4444" : "#334155";
-    ctx.strokeRect(520, 15, 265, 75);
-
-    ctx.fillStyle = "#f8fafc";
-    ctx.font = "12px 'Courier New'";
-    ctx.fillText(`Zona: ${gameState.zone} | Nv: ${gameState.level}`, 535, 35);
-    ctx.fillText(`Falta para la Nieve: ${gameState.daysToSnow}d`, 535, 53);
-    
-    ctx.fillStyle = "#334155";
-    ctx.fillRect(535, 62, 100, 8);
-    ctx.fillStyle = "#22c55e";
-    ctx.fillRect(535, 62, gameState.hp, 8);
-
-    ctx.fillStyle = gameState.furyMode ? "#ef4444" : "#94a3b8";
-    ctx.fillText(`Furia (F): ${gameState.furyMode ? "ON" : "OFF"}`, 645, 68);
-
-    // Controles Inferiores Actualizados
-    ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
-    ctx.fillRect(15, 415, 770, 25);
-    ctx.fillStyle = "#94a3b8";
-    ctx.fillText("Flechas = Mover/Salto/Agacharse | Z=Zarpazo X=Mordisco C=Embestida Espacio=Coletazo F=Furia", 20, 432);
-
-    // Pausa
-    if (gameState.paused) {
+        // Pantalla de Pausa dentro del canvas
         ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
@@ -280,17 +341,12 @@ function renderGame() {
         
         ctx.font = "16px 'Courier New'";
         ctx.fillStyle = "#cbd5e1";
-        ctx.fillText("▶ Presiona [ Esc ] para Reanudar", 265, 240);
+        ctx.fillText("▶ Presiona [ Esc ] o el botón para Reanudar", 195, 230);
     }
-}
-
-// Bucle principal
-function gameLoop() {
-    updateGameLogic();
-    renderGame();
     requestAnimationFrame(gameLoop);
 }
 
+updateUI();
 gameLoop();
 </script>
 
