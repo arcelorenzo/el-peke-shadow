@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" id="game-body">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Pequeño Shadow - El Viaje de El Lobichua</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body id="game-body">
+<body>
 
     <!-- Pantalla de Configuración Inicial -->
-    <div id="options-screen" class="screen">
+    <div id="options-screen" class="main-screen">
         <h1 id="main-title" class="game-main-title">EL PEQUEÑO SHADOW</h1>
         <div class="options-box">
             <label>🌐 Idioma / Language:</label>
@@ -31,8 +31,8 @@
         <button id="btn-start" class="paw-button" onclick="startAdventure()">🐾 Iniciar el Viaje</button>
     </div>
 
-    <!-- Contenedor Principal del Juego -->
-    <div id="game-container" class="hidden">
+    <!-- Contenedor Principal del Juego (Independiente) -->
+    <div id="game-container" class="main-screen hidden">
         <div class="top-control-bar">
             <button class="mini-btn" onclick="togglePause()">⏸️ Pausa</button>
             <button class="mini-btn" onclick="saveGame()">💾 Guardar</button>
