@@ -13,6 +13,13 @@ let gameState = {
     bossShield: false
 };
 
+// Carga de tus imágenes reales desde la carpeta del proyecto
+const bgZone1 = new Image();
+bgZone1.src = "23ab9479b2f555bda9af1f71329ef902"; // Fondo de montaña nocturna
+
+const shadowSprite = new Image();
+shadowSprite.src = "videoframe_640"; // Sprite del lobito Shadow
+
 // Referencias UI
 const hpVal = document.getElementById("hp-val");
 const zoneVal = document.getElementById("zone-val");
@@ -67,12 +74,12 @@ function playSound(frequency, type, duration) {
     oscillator.stop(audioCtx.currentTime + duration);
 }
 
-// Objeto del Personaje (Shadow / Lobito) con físicas de salto y agachamiento
+// Objeto del Personaje (Shadow / Lobito)
 let player = {
     x: 100,
-    y: 330,
-    width: 35,
-    height: 40,
+    y: 320,
+    width: 45,
+    height: 45,
     speed: 4,
     dx: 0,
     dy: 0,
@@ -127,38 +134,36 @@ function gameLoop() {
         // 1. Limpiar pantalla
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 2. Fondo atmosférico según la zona actual
-        if (gameState.zone <= 2) {
-            ctx.fillStyle = "#09192f"; // Bosque nocturno / Montaña
-        } else if (gameState.zone <= 4) {
-            ctx.fillStyle = "#112233"; // Ríos y rocas
+        // 2. Dibujar Fondo Real de la Montaña (o respaldo si carga)
+        if (bgZone1.complete && bgZone1.naturalWidth !== 0) {
+            ctx.drawImage(bgZone1, 0, 0, canvas.width, canvas.height);
         } else {
-            ctx.fillStyle = "#1e293b"; // Paisaje invernal profundo
+            ctx.fillStyle = "#09192f";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 3. Dibujar suelo del mapa
-        ctx.fillStyle = "#1b2a47";
-        ctx.fillRect(0, 380, canvas.width, 70);
+        // 3. Suelo sutil
+        ctx.fillStyle = "rgba(27, 42, 71, 0.6)";
+        ctx.fillRect(0, 375, canvas.width, 75);
 
-        // 4. Gestión de Movimiento Horizontal (Flechas o A/D)
+        // 4. Gestión de Movimiento Horizontal
         let currentSpeed = gameState.furyMode ? player.speed * 1.5 : player.speed;
         player.dx = 0;
         if (keys['ArrowRight'] || keys['d'] || keys['D']) player.dx = currentSpeed;
         if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.dx = -currentSpeed;
 
-        // Agacharse (Flecha Abajo)
+        // Agacharse
         if (keys['ArrowDown']) {
             player.isCrouched = true;
-            player.height = 25;
-            player.y = 355;
+            player.height = 30;
+            player.y = 350;
         } else {
             player.isCrouched = false;
-            player.height = 40;
-            player.y = 340;
+            player.height = 45;
+            player.y = 330;
         }
 
-        // Salto (Flecha Arriba)
+        // Salto
         if ((keys['ArrowUp'] || keys['w'] || keys['W']) && !player.isJumping && !player.isCrouched) {
             player.isJumping = true;
             player.dy = -8;
@@ -168,9 +173,9 @@ function gameLoop() {
         // Física de salto
         if (player.isJumping) {
             player.y += player.dy;
-            player.dy += 0.4; // Gravedad
-            if (player.y >= 340) {
-                player.y = 340;
+            player.dy += 0.4;
+            if (player.y >= 330) {
+                player.y = 330;
                 player.isJumping = false;
                 player.dy = 0;
             }
@@ -186,15 +191,21 @@ function gameLoop() {
             }
         }
 
-        // 5. Renderizar a Shadow (Lobito azabache o modo furia rojo)
-        ctx.fillStyle = gameState.furyMode ? "#ef4444" : "#111111";
-        ctx.fillRect(player.x, player.y, player.width, player.height);
+        // 5. Renderizar a Shadow (Lobito con su imagen real)
+        if (shadowSprite.complete && shadowSprite.naturalWidth !== 0) {
+            ctx.drawImage(shadowSprite, player.x, player.y, player.width, player.height);
+            // Destello rojo si está en modo furia
+            if (gameState.furyMode) {
+                ctx.fillStyle = "rgba(239, 68, 68, 0.3)";
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+            }
+        } else {
+            // Respaldo por si la imagen tarda en cargar
+            ctx.fillStyle = gameState.furyMode ? "#ef4444" : "#111111";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
 
-        // Ojos de Miel (o destello en furia)
-        ctx.fillStyle = gameState.furyMode ? "#ffffff" : "#fbbf24";
-        ctx.fillRect(player.x + 22, player.y + (player.isCrouched ? 5 : 10), 5, 4);
-
-        // Mostrar texto de ataque en pantalla si se usa una tecla
+        // Texto de ataque en pantalla
         if (player.actionText !== "") {
             ctx.fillStyle = "#facc15";
             ctx.font = "bold 13px 'Courier New'";
@@ -202,12 +213,12 @@ function gameLoop() {
         }
 
         // 6. Información y Estado en Pantalla
-        ctx.fillStyle = "#8b949e";
+        ctx.fillStyle = "#ffffff";
         ctx.font = "11px 'Courier New'";
         ctx.fillText(`Zona ${gameState.zone}: Aventura del Lobito`, 15, 25);
         ctx.fillText(`Furia (F): ${gameState.furyMode ? "ACTIVADA" : "INACTIVA"}`, 15, 42);
         
-        ctx.fillStyle = "#64748b";
+        ctx.fillStyle = "#94a3b8";
         ctx.fillText("Controles: Flechas=Mover/Salto/Agachar | Z=Zarpazo X=Mordisco C=Embestida Espacio=Coletazo", 15, 435);
     }
     requestAnimationFrame(gameLoop);
