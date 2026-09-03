@@ -144,6 +144,7 @@ body {
     gap: 10px;
     transition: all 0.2s ease;
     text-decoration: none;
+    width: 100%;
 }
 
 .paw-button:hover {
@@ -152,6 +153,7 @@ body {
     color: var(--accent-gold);
 }
 
+/* Forzar ocultamiento absoluto */
 .hidden {
     display: none !important;
 }
