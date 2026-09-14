@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0d1117">
+    <title>Shadow: El Pequeño Lobo — Modo Supervivencia</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main id="game-container">
+        <header id="ui-header">
+            <div>HP: <span id="hp-val">85</span>/<span id="max-hp-val">85</span></div>
+            <div>Zona: <span id="zone-val">1</span></div>
+            <div>Nieve: <span id="snow-val">9</span>d</div>
+            <button id="btn-pause" type="button">Pausa</button>
+            <button id="btn-save" type="button">Guardar</button>
+        </header>
+
+        <canvas id="gameCanvas" width="800" height="450" aria-label="Juego de Shadow"></canvas>
+
+        <div id="inventory-bar">
+            Reserva / Inventario: <span id="inventory-val">Vacío</span>
+        </div>
+
+        <div id="controls">
+            <span>WASD / Flechas = mover</span>
+            <span>↑ / W = salto</span>
+            <span>↓ / S = agachar</span>
+            <span>Z = zarpazo</span>
+            <span>X = mordisco</span>
+            <span>C = embestida</span>
+            <span>Espacio = coletazo</span>
+            <span>F = Furia</span>
+            <span>Esc = pausa</span>
+        </div>
+
+        <div id="status" role="status" aria-live="polite"></div>
+    </main>
+
+    <script src="game.js"></script>
+</body>
+</html>
